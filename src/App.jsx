@@ -1,5 +1,5 @@
-import { useContext, useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router';
+import { useContext, useState, useEffect, use } from 'react';
+import { Routes, Route, useNavigate } from 'react-router';
 
 import NavBar from './components/NavBar/NavBar';
 import SignUpForm from './components/SignUpForm/SignUpForm';
@@ -10,11 +10,12 @@ import HootList from './components/HootList/HootList';
 import { UserContext } from './contexts/UserContext';
 import * as hootService from './services/hootService';
 import HootDetails from './components/HootDetails/HootDetails'
+import HootForm from './components/HootForm/HootForm';
 
 const App = () => {
   const { user } = useContext(UserContext);
   const [hoots, setHoots] = useState([])
-  
+  const navigate = useNavigate()
   useEffect(() => {
     const fetchAllHoots = async () => {
       const hootsData = await hootService.index();
@@ -24,7 +25,14 @@ const App = () => {
     if (user) fetchAllHoots();
   }, [user]); //only run on component mount or user state changes
   
-  
+  const handleAddHoot = async (hootFormData) => {
+    const newHoot = await hootService.create(hootFormData);
+    setHoots([newHoot, ...hoots]);
+    navigate('/hoots');
+  };
+  const handleDeleteHoot = async (hootId) => {
+    console.log('hootId', hootId);
+  };
   return (
     <>
       <NavBar/>
@@ -33,11 +41,15 @@ const App = () => {
         {user ? (
           <>
             {/* Protected routes (available only to signed-in users) */}
-            <Route path='/hoots' element={<HootList hoots={hoots} />} />
+            <Route 
+            path='/hoots' element={<HootList hoots={hoots} />} />
             <Route 
               path='/hoots/:hootId'
-              element={<HootDetails />}
-            />  
+              element={<HootDetails handleDeleteHoot={handleDeleteHoot}/>}
+            />
+            <Route 
+            path='/hoots/new'
+             element={<HootForm handleAddHoot={handleAddHoot}/>} /> 
           </>
         ) : (
           <>
